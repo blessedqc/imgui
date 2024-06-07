@@ -28,16 +28,13 @@
 // Using XInput for gamepad (will load DLL dynamically)
 #ifndef IMGUI_IMPL_WIN32_DISABLE_GAMEPAD
 #include <xinput.h>
-typedef DWORD (WINAPI *PFN_XInputGetCapabilities)(DWORD, DWORD, XINPUT_CAPABILITIES*);
-typedef DWORD (WINAPI *PFN_XInputGetState)(DWORD, XINPUT_STATE*);
+typedef DWORD(WINAPI* PFN_XInputGetCapabilities)(DWORD, DWORD, XINPUT_CAPABILITIES*);
+typedef DWORD(WINAPI* PFN_XInputGetState)(DWORD, XINPUT_STATE*);
 #endif
 
 // CHANGELOG
 // (minor and older changes stripped away, please see git history for details)
-//  2022-10-11: Using 'nullptr' instead of 'NULL' as per our switch to C++11.
-//  2022-09-28: Inputs: Convert WM_CHAR values with MultiByteToWideChar() when window class was registered as MBCS (not Unicode).
-//  2022-09-26: Inputs: Renamed ImGuiKey_ModXXX introduced in 1.87 to ImGuiMod_XXX (old names still supported).
-//  2022-01-26: Inputs: replaced short-lived io.AddKeyModsEvent() (added two weeks ago) with io.AddKeyEvent() using ImGuiKey_ModXXX flags. Sorry for the confusion.
+//  2022-01-26: Inputs: replaced short-lived io.AddKeyModsEvent() (added two weeks ago)with io.AddKeyEvent() using ImGuiKey_ModXXX flags. Sorry for the confusion.
 //  2021-01-20: Inputs: calling new io.AddKeyAnalogEvent() for gamepad support, instead of writing directly to io.NavInputs[].
 //  2022-01-17: Inputs: calling new io.AddMousePosEvent(), io.AddMouseButtonEvent(), io.AddMouseWheelEvent() API (1.87+).
 //  2022-01-17: Inputs: always update key mods next and before a key event (not in NewFrame) to fix input queue with very low framerates.
@@ -77,7 +74,7 @@ typedef DWORD (WINAPI *PFN_XInputGetState)(DWORD, XINPUT_STATE*);
 //  2018-01-05: Inputs: Added WM_LBUTTONDBLCLK double-click handlers for window classes with the CS_DBLCLKS flag.
 //  2017-10-23: Inputs: Added WM_SYSKEYDOWN / WM_SYSKEYUP handlers so e.g. the VK_MENU key can be read.
 //  2017-10-23: Inputs: Using Win32 ::SetCapture/::GetCapture() to retrieve mouse positions outside the client area when dragging.
-//  2016-11-12: Inputs: Only call Win32 ::SetCursor(nullptr) when io.MouseDrawCursor is set.
+//  2016-11-12: Inputs: Only call Win32 ::SetCursor(NULL) when io.MouseDrawCursor is set.
 
 struct ImGui_ImplWin32_Data
 {
@@ -88,16 +85,16 @@ struct ImGui_ImplWin32_Data
     INT64                       Time;
     INT64                       TicksPerSecond;
     ImGuiMouseCursor            LastMouseCursor;
-
-#ifndef IMGUI_IMPL_WIN32_DISABLE_GAMEPAD
     bool                        HasGamepad;
     bool                        WantUpdateHasGamepad;
+
+#ifndef IMGUI_IMPL_WIN32_DISABLE_GAMEPAD
     HMODULE                     XInputDLL;
     PFN_XInputGetCapabilities   XInputGetCapabilities;
     PFN_XInputGetState          XInputGetState;
 #endif
 
-    ImGui_ImplWin32_Data()      { memset((void*)this, 0, sizeof(*this)); }
+    ImGui_ImplWin32_Data() { memset((void*)this, 0, sizeof(*this)); }
 };
 
 // Backend data stored in io.BackendPlatformUserData to allow support for multiple Dear ImGui contexts
@@ -106,14 +103,14 @@ struct ImGui_ImplWin32_Data
 // FIXME: some shared resources (mouse cursor shape, gamepad) are mishandled when using multi-context.
 static ImGui_ImplWin32_Data* ImGui_ImplWin32_GetBackendData()
 {
-    return ImGui::GetCurrentContext() ? (ImGui_ImplWin32_Data*)ImGui::GetIO().BackendPlatformUserData : nullptr;
+    return ImGui::GetCurrentContext() ? (ImGui_ImplWin32_Data*)ImGui::GetIO().BackendPlatformUserData : NULL;
 }
 
 // Functions
 bool    ImGui_ImplWin32_Init(void* hwnd)
 {
     ImGuiIO& io = ImGui::GetIO();
-    IM_ASSERT(io.BackendPlatformUserData == nullptr && "Already initialized a platform backend!");
+    IM_ASSERT(io.BackendPlatformUserData == NULL && "Already initialized a platform backend!");
 
     INT64 perf_frequency, perf_counter;
     if (!::QueryPerformanceFrequency((LARGE_INTEGER*)&perf_frequency))
@@ -129,6 +126,7 @@ bool    ImGui_ImplWin32_Init(void* hwnd)
     io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;          // We can honor io.WantSetMousePos requests (optional, rarely used)
 
     bd->hWnd = (HWND)hwnd;
+    bd->WantUpdateHasGamepad = true;
     bd->TicksPerSecond = perf_frequency;
     bd->Time = perf_counter;
     bd->LastMouseCursor = ImGuiMouseCursor_COUNT;
@@ -138,7 +136,6 @@ bool    ImGui_ImplWin32_Init(void* hwnd)
 
     // Dynamically load XInput library
 #ifndef IMGUI_IMPL_WIN32_DISABLE_GAMEPAD
-    bd->WantUpdateHasGamepad = true;
     const char* xinput_dll_names[] =
     {
         "xinput1_4.dll",   // Windows 8+
@@ -163,7 +160,7 @@ bool    ImGui_ImplWin32_Init(void* hwnd)
 void    ImGui_ImplWin32_Shutdown()
 {
     ImGui_ImplWin32_Data* bd = ImGui_ImplWin32_GetBackendData();
-    IM_ASSERT(bd != nullptr && "No platform backend to shutdown, or already shutdown?");
+    IM_ASSERT(bd != NULL && "No platform backend to shutdown, or already shutdown?");
     ImGuiIO& io = ImGui::GetIO();
 
     // Unload XInput library
@@ -172,8 +169,8 @@ void    ImGui_ImplWin32_Shutdown()
         ::FreeLibrary(bd->XInputDLL);
 #endif // IMGUI_IMPL_WIN32_DISABLE_GAMEPAD
 
-    io.BackendPlatformName = nullptr;
-    io.BackendPlatformUserData = nullptr;
+    io.BackendPlatformName = NULL;
+    io.BackendPlatformUserData = NULL;
     IM_DELETE(bd);
 }
 
@@ -187,7 +184,7 @@ static bool ImGui_ImplWin32_UpdateMouseCursor()
     if (imgui_cursor == ImGuiMouseCursor_None || io.MouseDrawCursor)
     {
         // Hide OS mouse cursor if imgui is drawing it or if it wants no cursor
-        ::SetCursor(nullptr);
+        ::SetCursor(NULL);
     }
     else
     {
@@ -205,7 +202,7 @@ static bool ImGui_ImplWin32_UpdateMouseCursor()
         case ImGuiMouseCursor_Hand:         win32_cursor = IDC_HAND; break;
         case ImGuiMouseCursor_NotAllowed:   win32_cursor = IDC_NO; break;
         }
-        ::SetCursor(::LoadCursor(nullptr, win32_cursor));
+        ::SetCursor(::LoadCursor(NULL, win32_cursor));
     }
     return true;
 }
@@ -241,10 +238,10 @@ static void ImGui_ImplWin32_ProcessKeyEventsWorkarounds()
 static void ImGui_ImplWin32_UpdateKeyModifiers()
 {
     ImGuiIO& io = ImGui::GetIO();
-    io.AddKeyEvent(ImGuiMod_Ctrl, IsVkDown(VK_CONTROL));
-    io.AddKeyEvent(ImGuiMod_Shift, IsVkDown(VK_SHIFT));
-    io.AddKeyEvent(ImGuiMod_Alt, IsVkDown(VK_MENU));
-    io.AddKeyEvent(ImGuiMod_Super, IsVkDown(VK_APPS));
+    io.AddKeyEvent(ImGuiKey_ModCtrl, IsVkDown(VK_CONTROL));
+    io.AddKeyEvent(ImGuiKey_ModShift, IsVkDown(VK_SHIFT));
+    io.AddKeyEvent(ImGuiKey_ModAlt, IsVkDown(VK_MENU));
+    io.AddKeyEvent(ImGuiKey_ModSuper, IsVkDown(VK_APPS));
 }
 
 static void ImGui_ImplWin32_UpdateMouseData()
@@ -280,8 +277,8 @@ static void ImGui_ImplWin32_UpdateGamepads()
 #ifndef IMGUI_IMPL_WIN32_DISABLE_GAMEPAD
     ImGuiIO& io = ImGui::GetIO();
     ImGui_ImplWin32_Data* bd = ImGui_ImplWin32_GetBackendData();
-    //if ((io.ConfigFlags & ImGuiConfigFlags_NavEnableGamepad) == 0) // FIXME: Technically feeding gamepad shouldn't depend on this now that they are regular inputs.
-    //    return;
+    if ((io.ConfigFlags & ImGuiConfigFlags_NavEnableGamepad) == 0)
+        return;
 
     // Calling XInputGetState() every frame on disconnected gamepads is unfortunately too slow.
     // Instead we refresh gamepad availability by calling XInputGetCapabilities() _only_ after receiving WM_DEVICECHANGE.
@@ -295,39 +292,39 @@ static void ImGui_ImplWin32_UpdateGamepads()
     io.BackendFlags &= ~ImGuiBackendFlags_HasGamepad;
     XINPUT_STATE xinput_state;
     XINPUT_GAMEPAD& gamepad = xinput_state.Gamepad;
-    if (!bd->HasGamepad || bd->XInputGetState == nullptr || bd->XInputGetState(0, &xinput_state) != ERROR_SUCCESS)
+    if (!bd->HasGamepad || bd->XInputGetState == NULL || bd->XInputGetState(0, &xinput_state) != ERROR_SUCCESS)
         return;
     io.BackendFlags |= ImGuiBackendFlags_HasGamepad;
 
-    #define IM_SATURATE(V)                      (V < 0.0f ? 0.0f : V > 1.0f ? 1.0f : V)
-    #define MAP_BUTTON(KEY_NO, BUTTON_ENUM)     { io.AddKeyEvent(KEY_NO, (gamepad.wButtons & BUTTON_ENUM) != 0); }
-    #define MAP_ANALOG(KEY_NO, VALUE, V0, V1)   { float vn = (float)(VALUE - V0) / (float)(V1 - V0); io.AddKeyAnalogEvent(KEY_NO, vn > 0.10f, IM_SATURATE(vn)); }
-    MAP_BUTTON(ImGuiKey_GamepadStart,           XINPUT_GAMEPAD_START);
-    MAP_BUTTON(ImGuiKey_GamepadBack,            XINPUT_GAMEPAD_BACK);
-    MAP_BUTTON(ImGuiKey_GamepadFaceLeft,        XINPUT_GAMEPAD_X);
-    MAP_BUTTON(ImGuiKey_GamepadFaceRight,       XINPUT_GAMEPAD_B);
-    MAP_BUTTON(ImGuiKey_GamepadFaceUp,          XINPUT_GAMEPAD_Y);
-    MAP_BUTTON(ImGuiKey_GamepadFaceDown,        XINPUT_GAMEPAD_A);
-    MAP_BUTTON(ImGuiKey_GamepadDpadLeft,        XINPUT_GAMEPAD_DPAD_LEFT);
-    MAP_BUTTON(ImGuiKey_GamepadDpadRight,       XINPUT_GAMEPAD_DPAD_RIGHT);
-    MAP_BUTTON(ImGuiKey_GamepadDpadUp,          XINPUT_GAMEPAD_DPAD_UP);
-    MAP_BUTTON(ImGuiKey_GamepadDpadDown,        XINPUT_GAMEPAD_DPAD_DOWN);
-    MAP_BUTTON(ImGuiKey_GamepadL1,              XINPUT_GAMEPAD_LEFT_SHOULDER);
-    MAP_BUTTON(ImGuiKey_GamepadR1,              XINPUT_GAMEPAD_RIGHT_SHOULDER);
-    MAP_ANALOG(ImGuiKey_GamepadL2,              gamepad.bLeftTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD, 255);
-    MAP_ANALOG(ImGuiKey_GamepadR2,              gamepad.bRightTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD, 255);
-    MAP_BUTTON(ImGuiKey_GamepadL3,              XINPUT_GAMEPAD_LEFT_THUMB);
-    MAP_BUTTON(ImGuiKey_GamepadR3,              XINPUT_GAMEPAD_RIGHT_THUMB);
-    MAP_ANALOG(ImGuiKey_GamepadLStickLeft,      gamepad.sThumbLX, -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, -32768);
-    MAP_ANALOG(ImGuiKey_GamepadLStickRight,     gamepad.sThumbLX, +XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, +32767);
-    MAP_ANALOG(ImGuiKey_GamepadLStickUp,        gamepad.sThumbLY, +XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, +32767);
-    MAP_ANALOG(ImGuiKey_GamepadLStickDown,      gamepad.sThumbLY, -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, -32768);
-    MAP_ANALOG(ImGuiKey_GamepadRStickLeft,      gamepad.sThumbRX, -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, -32768);
-    MAP_ANALOG(ImGuiKey_GamepadRStickRight,     gamepad.sThumbRX, +XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, +32767);
-    MAP_ANALOG(ImGuiKey_GamepadRStickUp,        gamepad.sThumbRY, +XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, +32767);
-    MAP_ANALOG(ImGuiKey_GamepadRStickDown,      gamepad.sThumbRY, -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, -32768);
-    #undef MAP_BUTTON
-    #undef MAP_ANALOG
+#define IM_SATURATE(V)                      (V < 0.0f ? 0.0f : V > 1.0f ? 1.0f : V)
+#define MAP_BUTTON(KEY_NO, BUTTON_ENUM)     { io.AddKeyEvent(KEY_NO, (gamepad.wButtons & BUTTON_ENUM) != 0); }
+#define MAP_ANALOG(KEY_NO, VALUE, V0, V1)   { float vn = (float)(VALUE - V0) / (float)(V1 - V0); io.AddKeyAnalogEvent(KEY_NO, vn > 0.10f, IM_SATURATE(vn)); }
+    MAP_BUTTON(ImGuiKey_GamepadStart, XINPUT_GAMEPAD_START);
+    MAP_BUTTON(ImGuiKey_GamepadBack, XINPUT_GAMEPAD_BACK);
+    MAP_BUTTON(ImGuiKey_GamepadFaceLeft, XINPUT_GAMEPAD_X);
+    MAP_BUTTON(ImGuiKey_GamepadFaceRight, XINPUT_GAMEPAD_B);
+    MAP_BUTTON(ImGuiKey_GamepadFaceUp, XINPUT_GAMEPAD_Y);
+    MAP_BUTTON(ImGuiKey_GamepadFaceDown, XINPUT_GAMEPAD_A);
+    MAP_BUTTON(ImGuiKey_GamepadDpadLeft, XINPUT_GAMEPAD_DPAD_LEFT);
+    MAP_BUTTON(ImGuiKey_GamepadDpadRight, XINPUT_GAMEPAD_DPAD_RIGHT);
+    MAP_BUTTON(ImGuiKey_GamepadDpadUp, XINPUT_GAMEPAD_DPAD_UP);
+    MAP_BUTTON(ImGuiKey_GamepadDpadDown, XINPUT_GAMEPAD_DPAD_DOWN);
+    MAP_BUTTON(ImGuiKey_GamepadL1, XINPUT_GAMEPAD_LEFT_SHOULDER);
+    MAP_BUTTON(ImGuiKey_GamepadR1, XINPUT_GAMEPAD_RIGHT_SHOULDER);
+    MAP_ANALOG(ImGuiKey_GamepadL2, gamepad.bLeftTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD, 255);
+    MAP_ANALOG(ImGuiKey_GamepadR2, gamepad.bRightTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD, 255);
+    MAP_BUTTON(ImGuiKey_GamepadL3, XINPUT_GAMEPAD_LEFT_THUMB);
+    MAP_BUTTON(ImGuiKey_GamepadR3, XINPUT_GAMEPAD_RIGHT_THUMB);
+    MAP_ANALOG(ImGuiKey_GamepadLStickLeft, gamepad.sThumbLX, -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, -32768);
+    MAP_ANALOG(ImGuiKey_GamepadLStickRight, gamepad.sThumbLX, +XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, +32767);
+    MAP_ANALOG(ImGuiKey_GamepadLStickUp, gamepad.sThumbLY, +XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, +32767);
+    MAP_ANALOG(ImGuiKey_GamepadLStickDown, gamepad.sThumbLY, -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, -32768);
+    MAP_ANALOG(ImGuiKey_GamepadRStickLeft, gamepad.sThumbRX, -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, -32768);
+    MAP_ANALOG(ImGuiKey_GamepadRStickRight, gamepad.sThumbRX, +XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, +32767);
+    MAP_ANALOG(ImGuiKey_GamepadRStickUp, gamepad.sThumbRY, +XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, +32767);
+    MAP_ANALOG(ImGuiKey_GamepadRStickDown, gamepad.sThumbRY, -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, -32768);
+#undef MAP_BUTTON
+#undef MAP_ANALOG
 #endif // #ifndef IMGUI_IMPL_WIN32_DISABLE_GAMEPAD
 }
 
@@ -335,7 +332,7 @@ void    ImGui_ImplWin32_NewFrame()
 {
     ImGuiIO& io = ImGui::GetIO();
     ImGui_ImplWin32_Data* bd = ImGui_ImplWin32_GetBackendData();
-    IM_ASSERT(bd != nullptr && "Did you call ImGui_ImplWin32_Init()?");
+    IM_ASSERT(bd != NULL && "Did you call ImGui_ImplWin32_Init()?");
 
     // Setup display size (every frame to accommodate for window resizing)
     RECT rect = { 0, 0, 0, 0 };
@@ -374,111 +371,111 @@ static ImGuiKey ImGui_ImplWin32_VirtualKeyToImGuiKey(WPARAM wParam)
 {
     switch (wParam)
     {
-        case VK_TAB: return ImGuiKey_Tab;
-        case VK_LEFT: return ImGuiKey_LeftArrow;
-        case VK_RIGHT: return ImGuiKey_RightArrow;
-        case VK_UP: return ImGuiKey_UpArrow;
-        case VK_DOWN: return ImGuiKey_DownArrow;
-        case VK_PRIOR: return ImGuiKey_PageUp;
-        case VK_NEXT: return ImGuiKey_PageDown;
-        case VK_HOME: return ImGuiKey_Home;
-        case VK_END: return ImGuiKey_End;
-        case VK_INSERT: return ImGuiKey_Insert;
-        case VK_DELETE: return ImGuiKey_Delete;
-        case VK_BACK: return ImGuiKey_Backspace;
-        case VK_SPACE: return ImGuiKey_Space;
-        case VK_RETURN: return ImGuiKey_Enter;
-        case VK_ESCAPE: return ImGuiKey_Escape;
-        case VK_OEM_7: return ImGuiKey_Apostrophe;
-        case VK_OEM_COMMA: return ImGuiKey_Comma;
-        case VK_OEM_MINUS: return ImGuiKey_Minus;
-        case VK_OEM_PERIOD: return ImGuiKey_Period;
-        case VK_OEM_2: return ImGuiKey_Slash;
-        case VK_OEM_1: return ImGuiKey_Semicolon;
-        case VK_OEM_PLUS: return ImGuiKey_Equal;
-        case VK_OEM_4: return ImGuiKey_LeftBracket;
-        case VK_OEM_5: return ImGuiKey_Backslash;
-        case VK_OEM_6: return ImGuiKey_RightBracket;
-        case VK_OEM_3: return ImGuiKey_GraveAccent;
-        case VK_CAPITAL: return ImGuiKey_CapsLock;
-        case VK_SCROLL: return ImGuiKey_ScrollLock;
-        case VK_NUMLOCK: return ImGuiKey_NumLock;
-        case VK_SNAPSHOT: return ImGuiKey_PrintScreen;
-        case VK_PAUSE: return ImGuiKey_Pause;
-        case VK_NUMPAD0: return ImGuiKey_Keypad0;
-        case VK_NUMPAD1: return ImGuiKey_Keypad1;
-        case VK_NUMPAD2: return ImGuiKey_Keypad2;
-        case VK_NUMPAD3: return ImGuiKey_Keypad3;
-        case VK_NUMPAD4: return ImGuiKey_Keypad4;
-        case VK_NUMPAD5: return ImGuiKey_Keypad5;
-        case VK_NUMPAD6: return ImGuiKey_Keypad6;
-        case VK_NUMPAD7: return ImGuiKey_Keypad7;
-        case VK_NUMPAD8: return ImGuiKey_Keypad8;
-        case VK_NUMPAD9: return ImGuiKey_Keypad9;
-        case VK_DECIMAL: return ImGuiKey_KeypadDecimal;
-        case VK_DIVIDE: return ImGuiKey_KeypadDivide;
-        case VK_MULTIPLY: return ImGuiKey_KeypadMultiply;
-        case VK_SUBTRACT: return ImGuiKey_KeypadSubtract;
-        case VK_ADD: return ImGuiKey_KeypadAdd;
-        case IM_VK_KEYPAD_ENTER: return ImGuiKey_KeypadEnter;
-        case VK_LSHIFT: return ImGuiKey_LeftShift;
-        case VK_LCONTROL: return ImGuiKey_LeftCtrl;
-        case VK_LMENU: return ImGuiKey_LeftAlt;
-        case VK_LWIN: return ImGuiKey_LeftSuper;
-        case VK_RSHIFT: return ImGuiKey_RightShift;
-        case VK_RCONTROL: return ImGuiKey_RightCtrl;
-        case VK_RMENU: return ImGuiKey_RightAlt;
-        case VK_RWIN: return ImGuiKey_RightSuper;
-        case VK_APPS: return ImGuiKey_Menu;
-        case '0': return ImGuiKey_0;
-        case '1': return ImGuiKey_1;
-        case '2': return ImGuiKey_2;
-        case '3': return ImGuiKey_3;
-        case '4': return ImGuiKey_4;
-        case '5': return ImGuiKey_5;
-        case '6': return ImGuiKey_6;
-        case '7': return ImGuiKey_7;
-        case '8': return ImGuiKey_8;
-        case '9': return ImGuiKey_9;
-        case 'A': return ImGuiKey_A;
-        case 'B': return ImGuiKey_B;
-        case 'C': return ImGuiKey_C;
-        case 'D': return ImGuiKey_D;
-        case 'E': return ImGuiKey_E;
-        case 'F': return ImGuiKey_F;
-        case 'G': return ImGuiKey_G;
-        case 'H': return ImGuiKey_H;
-        case 'I': return ImGuiKey_I;
-        case 'J': return ImGuiKey_J;
-        case 'K': return ImGuiKey_K;
-        case 'L': return ImGuiKey_L;
-        case 'M': return ImGuiKey_M;
-        case 'N': return ImGuiKey_N;
-        case 'O': return ImGuiKey_O;
-        case 'P': return ImGuiKey_P;
-        case 'Q': return ImGuiKey_Q;
-        case 'R': return ImGuiKey_R;
-        case 'S': return ImGuiKey_S;
-        case 'T': return ImGuiKey_T;
-        case 'U': return ImGuiKey_U;
-        case 'V': return ImGuiKey_V;
-        case 'W': return ImGuiKey_W;
-        case 'X': return ImGuiKey_X;
-        case 'Y': return ImGuiKey_Y;
-        case 'Z': return ImGuiKey_Z;
-        case VK_F1: return ImGuiKey_F1;
-        case VK_F2: return ImGuiKey_F2;
-        case VK_F3: return ImGuiKey_F3;
-        case VK_F4: return ImGuiKey_F4;
-        case VK_F5: return ImGuiKey_F5;
-        case VK_F6: return ImGuiKey_F6;
-        case VK_F7: return ImGuiKey_F7;
-        case VK_F8: return ImGuiKey_F8;
-        case VK_F9: return ImGuiKey_F9;
-        case VK_F10: return ImGuiKey_F10;
-        case VK_F11: return ImGuiKey_F11;
-        case VK_F12: return ImGuiKey_F12;
-        default: return ImGuiKey_None;
+    case VK_TAB: return ImGuiKey_Tab;
+    case VK_LEFT: return ImGuiKey_LeftArrow;
+    case VK_RIGHT: return ImGuiKey_RightArrow;
+    case VK_UP: return ImGuiKey_UpArrow;
+    case VK_DOWN: return ImGuiKey_DownArrow;
+    case VK_PRIOR: return ImGuiKey_PageUp;
+    case VK_NEXT: return ImGuiKey_PageDown;
+    case VK_HOME: return ImGuiKey_Home;
+    case VK_END: return ImGuiKey_End;
+    case VK_INSERT: return ImGuiKey_Insert;
+    case VK_DELETE: return ImGuiKey_Delete;
+    case VK_BACK: return ImGuiKey_Backspace;
+    case VK_SPACE: return ImGuiKey_Space;
+    case VK_RETURN: return ImGuiKey_Enter;
+    case VK_ESCAPE: return ImGuiKey_Escape;
+    case VK_OEM_7: return ImGuiKey_Apostrophe;
+    case VK_OEM_COMMA: return ImGuiKey_Comma;
+    case VK_OEM_MINUS: return ImGuiKey_Minus;
+    case VK_OEM_PERIOD: return ImGuiKey_Period;
+    case VK_OEM_2: return ImGuiKey_Slash;
+    case VK_OEM_1: return ImGuiKey_Semicolon;
+    case VK_OEM_PLUS: return ImGuiKey_Equal;
+    case VK_OEM_4: return ImGuiKey_LeftBracket;
+    case VK_OEM_5: return ImGuiKey_Backslash;
+    case VK_OEM_6: return ImGuiKey_RightBracket;
+    case VK_OEM_3: return ImGuiKey_GraveAccent;
+    case VK_CAPITAL: return ImGuiKey_CapsLock;
+    case VK_SCROLL: return ImGuiKey_ScrollLock;
+    case VK_NUMLOCK: return ImGuiKey_NumLock;
+    case VK_SNAPSHOT: return ImGuiKey_PrintScreen;
+    case VK_PAUSE: return ImGuiKey_Pause;
+    case VK_NUMPAD0: return ImGuiKey_Keypad0;
+    case VK_NUMPAD1: return ImGuiKey_Keypad1;
+    case VK_NUMPAD2: return ImGuiKey_Keypad2;
+    case VK_NUMPAD3: return ImGuiKey_Keypad3;
+    case VK_NUMPAD4: return ImGuiKey_Keypad4;
+    case VK_NUMPAD5: return ImGuiKey_Keypad5;
+    case VK_NUMPAD6: return ImGuiKey_Keypad6;
+    case VK_NUMPAD7: return ImGuiKey_Keypad7;
+    case VK_NUMPAD8: return ImGuiKey_Keypad8;
+    case VK_NUMPAD9: return ImGuiKey_Keypad9;
+    case VK_DECIMAL: return ImGuiKey_KeypadDecimal;
+    case VK_DIVIDE: return ImGuiKey_KeypadDivide;
+    case VK_MULTIPLY: return ImGuiKey_KeypadMultiply;
+    case VK_SUBTRACT: return ImGuiKey_KeypadSubtract;
+    case VK_ADD: return ImGuiKey_KeypadAdd;
+    case IM_VK_KEYPAD_ENTER: return ImGuiKey_KeypadEnter;
+    case VK_LSHIFT: return ImGuiKey_LeftShift;
+    case VK_LCONTROL: return ImGuiKey_LeftCtrl;
+    case VK_LMENU: return ImGuiKey_LeftAlt;
+    case VK_LWIN: return ImGuiKey_LeftSuper;
+    case VK_RSHIFT: return ImGuiKey_RightShift;
+    case VK_RCONTROL: return ImGuiKey_RightCtrl;
+    case VK_RMENU: return ImGuiKey_RightAlt;
+    case VK_RWIN: return ImGuiKey_RightSuper;
+    case VK_APPS: return ImGuiKey_Menu;
+    case '0': return ImGuiKey_0;
+    case '1': return ImGuiKey_1;
+    case '2': return ImGuiKey_2;
+    case '3': return ImGuiKey_3;
+    case '4': return ImGuiKey_4;
+    case '5': return ImGuiKey_5;
+    case '6': return ImGuiKey_6;
+    case '7': return ImGuiKey_7;
+    case '8': return ImGuiKey_8;
+    case '9': return ImGuiKey_9;
+    case 'A': return ImGuiKey_A;
+    case 'B': return ImGuiKey_B;
+    case 'C': return ImGuiKey_C;
+    case 'D': return ImGuiKey_D;
+    case 'E': return ImGuiKey_E;
+    case 'F': return ImGuiKey_F;
+    case 'G': return ImGuiKey_G;
+    case 'H': return ImGuiKey_H;
+    case 'I': return ImGuiKey_I;
+    case 'J': return ImGuiKey_J;
+    case 'K': return ImGuiKey_K;
+    case 'L': return ImGuiKey_L;
+    case 'M': return ImGuiKey_M;
+    case 'N': return ImGuiKey_N;
+    case 'O': return ImGuiKey_O;
+    case 'P': return ImGuiKey_P;
+    case 'Q': return ImGuiKey_Q;
+    case 'R': return ImGuiKey_R;
+    case 'S': return ImGuiKey_S;
+    case 'T': return ImGuiKey_T;
+    case 'U': return ImGuiKey_U;
+    case 'V': return ImGuiKey_V;
+    case 'W': return ImGuiKey_W;
+    case 'X': return ImGuiKey_X;
+    case 'Y': return ImGuiKey_Y;
+    case 'Z': return ImGuiKey_Z;
+    case VK_F1: return ImGuiKey_F1;
+    case VK_F2: return ImGuiKey_F2;
+    case VK_F3: return ImGuiKey_F3;
+    case VK_F4: return ImGuiKey_F4;
+    case VK_F5: return ImGuiKey_F5;
+    case VK_F6: return ImGuiKey_F6;
+    case VK_F7: return ImGuiKey_F7;
+    case VK_F8: return ImGuiKey_F8;
+    case VK_F9: return ImGuiKey_F9;
+    case VK_F10: return ImGuiKey_F10;
+    case VK_F11: return ImGuiKey_F11;
+    case VK_F12: return ImGuiKey_F12;
+    default: return ImGuiKey_None;
     }
 }
 
@@ -504,7 +501,7 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 #endif
 IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    if (ImGui::GetCurrentContext() == nullptr)
+    if (ImGui::GetCurrentContext() == NULL)
         return 0;
 
     ImGuiIO& io = ImGui::GetIO();
@@ -525,7 +522,7 @@ IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARA
         break;
     case WM_MOUSELEAVE:
         if (bd->MouseHwnd == hwnd)
-            bd->MouseHwnd = nullptr;
+            bd->MouseHwnd = NULL;
         bd->MouseTracked = false;
         io.AddMousePosEvent(-FLT_MAX, -FLT_MAX);
         break;
@@ -539,7 +536,7 @@ IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARA
         if (msg == WM_RBUTTONDOWN || msg == WM_RBUTTONDBLCLK) { button = 1; }
         if (msg == WM_MBUTTONDOWN || msg == WM_MBUTTONDBLCLK) { button = 2; }
         if (msg == WM_XBUTTONDOWN || msg == WM_XBUTTONDBLCLK) { button = (GET_XBUTTON_WPARAM(wParam) == XBUTTON1) ? 3 : 4; }
-        if (bd->MouseButtonsDown == 0 && ::GetCapture() == nullptr)
+        if (bd->MouseButtonsDown == 0 && ::GetCapture() == NULL)
             ::SetCapture(hwnd);
         bd->MouseButtonsDown |= 1 << button;
         io.AddMouseButtonEvent(button, true);
@@ -615,18 +612,9 @@ IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARA
         io.AddFocusEvent(msg == WM_SETFOCUS);
         return 0;
     case WM_CHAR:
-        if (::IsWindowUnicode(hwnd))
-        {
-            // You can also use ToAscii()+GetKeyboardState() to retrieve characters.
-            if (wParam > 0 && wParam < 0x10000)
-                io.AddInputCharacterUTF16((unsigned short)wParam);
-        }
-        else
-        {
-            wchar_t wch = 0;
-            ::MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, (char*)&wParam, 1, &wch, 1);
-            io.AddInputCharacter(wch);
-        }
+        // You can also use ToAscii()+GetKeyboardState() to retrieve characters.
+        if (wParam > 0 && wParam < 0x10000)
+            io.AddInputCharacterUTF16((unsigned short)wParam);
         return 0;
     case WM_SETCURSOR:
         // This is required to restore cursor when transitioning from e.g resize borders to client area.
@@ -634,10 +622,8 @@ IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARA
             return 1;
         return 0;
     case WM_DEVICECHANGE:
-#ifndef IMGUI_IMPL_WIN32_DISABLE_GAMEPAD
         if ((UINT)wParam == DBT_DEVNODES_CHANGED)
             bd->WantUpdateHasGamepad = true;
-#endif
         return 0;
     }
     return 0;
@@ -663,21 +649,21 @@ IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARA
 static BOOL _IsWindowsVersionOrGreater(WORD major, WORD minor, WORD)
 {
     typedef LONG(WINAPI* PFN_RtlVerifyVersionInfo)(OSVERSIONINFOEXW*, ULONG, ULONGLONG);
-    static PFN_RtlVerifyVersionInfo RtlVerifyVersionInfoFn = nullptr;
-	if (RtlVerifyVersionInfoFn == nullptr)
-		if (HMODULE ntdllModule = ::GetModuleHandleA("ntdll.dll"))
-			RtlVerifyVersionInfoFn = (PFN_RtlVerifyVersionInfo)GetProcAddress(ntdllModule, "RtlVerifyVersionInfo");
-    if (RtlVerifyVersionInfoFn == nullptr)
+    static PFN_RtlVerifyVersionInfo RtlVerifyVersionInfoFn = NULL;
+    if (RtlVerifyVersionInfoFn == NULL)
+        if (HMODULE ntdllModule = ::GetModuleHandleA("ntdll.dll"))
+            RtlVerifyVersionInfoFn = (PFN_RtlVerifyVersionInfo)GetProcAddress(ntdllModule, "RtlVerifyVersionInfo");
+    if (RtlVerifyVersionInfoFn == NULL)
         return FALSE;
 
     RTL_OSVERSIONINFOEXW versionInfo = { };
     ULONGLONG conditionMask = 0;
     versionInfo.dwOSVersionInfoSize = sizeof(RTL_OSVERSIONINFOEXW);
     versionInfo.dwMajorVersion = major;
-	versionInfo.dwMinorVersion = minor;
-	VER_SET_CONDITION(conditionMask, VER_MAJORVERSION, VER_GREATER_EQUAL);
-	VER_SET_CONDITION(conditionMask, VER_MINORVERSION, VER_GREATER_EQUAL);
-	return (RtlVerifyVersionInfoFn(&versionInfo, VER_MAJORVERSION | VER_MINORVERSION, conditionMask) == 0) ? TRUE : FALSE;
+    versionInfo.dwMinorVersion = minor;
+    VER_SET_CONDITION(conditionMask, VER_MAJORVERSION, VER_GREATER_EQUAL);
+    VER_SET_CONDITION(conditionMask, VER_MINORVERSION, VER_GREATER_EQUAL);
+    return (RtlVerifyVersionInfoFn(&versionInfo, VER_MAJORVERSION | VER_MINORVERSION, conditionMask) == 0) ? TRUE : FALSE;
 }
 
 #define _IsWindowsVistaOrGreater()   _IsWindowsVersionOrGreater(HIBYTE(0x0600), LOBYTE(0x0600), 0) // _WIN32_WINNT_VISTA
@@ -735,23 +721,23 @@ float ImGui_ImplWin32_GetDpiScaleForMonitor(void* monitor)
     UINT xdpi = 96, ydpi = 96;
     if (_IsWindows8Point1OrGreater())
     {
-		static HINSTANCE shcore_dll = ::LoadLibraryA("shcore.dll"); // Reference counted per-process
-		static PFN_GetDpiForMonitor GetDpiForMonitorFn = nullptr;
-		if (GetDpiForMonitorFn == nullptr && shcore_dll != nullptr)
+        static HINSTANCE shcore_dll = ::LoadLibraryA("shcore.dll"); // Reference counted per-process
+        static PFN_GetDpiForMonitor GetDpiForMonitorFn = NULL;
+        if (GetDpiForMonitorFn == NULL && shcore_dll != NULL)
             GetDpiForMonitorFn = (PFN_GetDpiForMonitor)::GetProcAddress(shcore_dll, "GetDpiForMonitor");
-		if (GetDpiForMonitorFn != nullptr)
-		{
-			GetDpiForMonitorFn((HMONITOR)monitor, MDT_EFFECTIVE_DPI, &xdpi, &ydpi);
+        if (GetDpiForMonitorFn != NULL)
+        {
+            GetDpiForMonitorFn((HMONITOR)monitor, MDT_EFFECTIVE_DPI, &xdpi, &ydpi);
             IM_ASSERT(xdpi == ydpi); // Please contact me if you hit this assert!
-			return xdpi / 96.0f;
-		}
+            return xdpi / 96.0f;
+        }
     }
 #ifndef NOGDI
-    const HDC dc = ::GetDC(nullptr);
+    const HDC dc = ::GetDC(NULL);
     xdpi = ::GetDeviceCaps(dc, LOGPIXELSX);
     ydpi = ::GetDeviceCaps(dc, LOGPIXELSY);
     IM_ASSERT(xdpi == ydpi); // Please contact me if you hit this assert!
-    ::ReleaseDC(nullptr, dc);
+    ::ReleaseDC(NULL, dc);
 #endif
     return xdpi / 96.0f;
 }
