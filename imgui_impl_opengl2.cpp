@@ -86,7 +86,7 @@ bool    ImGui_ImplOpenGL2_Init()
     return true;
 }
 
-void    ImGui_ImplOpenGL2_Shutdown()
+void ImGui_ImplOpenGL2_Shutdown()
 {
     ImGui_ImplOpenGL2_Data* bd = ImGui_ImplOpenGL2_GetBackendData();
     IM_ASSERT(bd != nullptr && "No renderer backend to shutdown, or already shutdown?");
@@ -98,7 +98,7 @@ void    ImGui_ImplOpenGL2_Shutdown()
     IM_DELETE(bd);
 }
 
-void    ImGui_ImplOpenGL2_NewFrame()
+void ImGui_ImplOpenGL2_NewFrame()
 {
     ImGui_ImplOpenGL2_Data* bd = ImGui_ImplOpenGL2_GetBackendData();
     IM_ASSERT(bd != nullptr && "Did you call ImGui_ImplOpenGL2_Init()?");
